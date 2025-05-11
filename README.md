@@ -146,6 +146,7 @@ To avoid reprocessing large files, you can save the vector index:
 - If you encounter CUDA/GPU errors, try forcing CPU usage
 - If the model is too slow, try reducing chunk sizes or using a smaller embedding model
 - If answers lack detail, try increasing the number of chunks retrieved (k_retrieval parameter)
+- If you have trouble with finding where ollama is downloaded, type where ollama.exe for Windows to see the correct path
 
 --------
 

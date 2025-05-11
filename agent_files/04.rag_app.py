@@ -1,5 +1,6 @@
 # Import the Llama3QASystem class (assumes it's defined in a file named qanda_rag.py)
 import importlib.util
+import os
 from pathlib import Path
 import platform
 import subprocess
@@ -8,7 +9,8 @@ import threading
 
 import streamlit as st
 
-module_path = "03.qanda_rag.py"
+OLLAMA_PATH = r"C:\Users\AngelicaChowdhury\AppData\Local\Programs\Ollama\ollama.exe"
+module_path = os.path.join(os.path.dirname(__file__), "03.qanda_rag.py")
 module_name = "qanda_rag_temp"
 
 spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -23,10 +25,14 @@ Llama3QASystem = qanda_rag.Llama3QASystem
 def is_ollama_installed() -> bool:
     try:
         result = subprocess.run(
-            ["ollama", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            [OLLAMA_PATH, "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
+        print("Ollama stdout:", result.stdout)
+        print("Ollama stderr:", result.stderr)
+        print("Ollama returncode:", result.returncode)
         return result.returncode == 0
-    except FileNotFoundError:
+    except Exception as e:
+        print("Ollama check error:", e)
         return False
 
 
@@ -34,7 +40,7 @@ def is_ollama_installed() -> bool:
 def is_llama3_available() -> bool:
     try:
         result = subprocess.run(
-            ["ollama", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            [OLLAMA_PATH, "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
         if result.returncode == 0:
             return "llama3" in result.stdout
@@ -48,7 +54,10 @@ def download_llama3_bg(status_placeholder):
     try:
         status_placeholder.text("Downloading Llama 3... This may take several minutes.")
         result = subprocess.run(
-            ["ollama", "pull", "llama3"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            [OLLAMA_PATH, "pull", "llama3"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
         if result.returncode == 0:
             status_placeholder.success("Llama 3 downloaded successfully!")
@@ -73,15 +82,24 @@ def get_ollama_install_instructions() -> str:
 
 def main():
     st.set_page_config(
-        page_title="Llama 3 Q&A System",
-        page_icon="🦙",
+        page_title="NDIS Q&A System",
+        page_icon=":guardsman:",
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
-    st.title("🦙 Llama 3 Q&A System")
+    current_dir = Path(__file__).parent
+    logo_path = (
+        current_dir.parent
+        / "data"
+        / "external"
+        / "National_Disability_Insurance_Scheme_logo.svg.png"
+    )
+
+    st.image(str(logo_path), width=150)
+    st.title("NDIS Q&A System")
     st.markdown("""
-    This application uses Meta's Llama 3 model to answer questions from your knowledge base.
+    This application uses Meta's Llama 3 model to answer questions from information on NDIS participants dataset webpage.
     No API keys or payments required - everything runs locally on your machine!
     """)
 

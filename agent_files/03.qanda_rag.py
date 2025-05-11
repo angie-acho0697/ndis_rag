@@ -1,21 +1,23 @@
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 import os
-from typing import List, Dict, Any
-import numpy as np
-from langchain_community.llms import Ollama
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from pathlib import Path
+from typing import Any, Dict
+
 from langchain.chains import RetrievalQA
-from langchain.vectorstores import FAISS
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
-from pathlib import Path
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import Ollama
+from langchain_community.vectorstores import FAISS
 
 
 class Llama3QASystem:
     def __init__(
         self,
         file_path: str = None,
-        chunk_size: int = 1000,
+        chunk_size: int = 500,
         chunk_overlap: int = 200,
         model_name: str = "llama3",
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
@@ -84,7 +86,10 @@ class Llama3QASystem:
 
         # Create document objects
         texts = text_splitter.split_text(text)
-        self.documents = [Document(page_content=t) for t in texts]
+        batch_size = 1000
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i : i + batch_size]
+            self.documents.extend([Document(page_content=t) for t in batch_texts])
         print(f"Data loaded and split into {len(self.documents)} chunks.")
         return True
 
@@ -95,7 +100,10 @@ class Llama3QASystem:
             return False
 
         print("Building vector index...")
-        self.vectorstore = FAISS.from_documents(self.documents, self.embedding_model)
+        with ThreadPoolExecutor() as executor:
+            self.vectorstore = FAISS.from_documents(
+                self.documents, self.embedding_model, executor=executor
+            )
         print("Vector index built successfully.")
         return True
 
@@ -143,6 +151,7 @@ Answer the question thoroughly and accurately based only on the provided context
         print("QA system is ready to answer questions using Llama 3!")
         return True
 
+    @lru_cache(maxsize=128)
     def answer_question(self, question: str) -> Dict[str, Any]:
         """
         Answer a question using the Llama 3 QA chain
