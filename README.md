@@ -150,7 +150,7 @@ The NDIS data used in this project is publicly available and is licensed under t
 - For accurate and official NDIS information, please visit [the official NDIS website](https://www.ndis.gov.au)
 - This project is intended for educational and research purposes only
 - **Performance Consideration**: The local RAG implementation used in this project may exhibit slower response times compared to direct API calls to language models. Users should be aware of this performance characteristic when utilising the system
-- **Testing Configuration**: For initial testing and development purposes, users may substitute the full dataset (`combined_content.txt`) with a smaller sample dataset (`combined_content_sml.txt`). This abridged version contains a subset of the parsed content and is recommended for preliminary testing and validation
+- **Testing Configuration**: For initial testing and development purposes, users may substitute the full dataset created from the 02.parse_files.py file with a smaller sample dataset. This should contain a subset of the parsed content and is recommended for preliminary testing and validation
 
 ## 📝 License
 
