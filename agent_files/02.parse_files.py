@@ -36,12 +36,12 @@ def parse_files_and_web_page(directory, web_page_file):
 
 
 if __name__ == "__main__":
-    data_dir = "ndis_agent/data/raw"
-    web_page_file = "ndis_agent/data/raw/web_page_content.txt"  # Path to the web page content file
+    data_dir = "data/raw"
+    web_page_file = "data/raw/web_page_content.txt"  # Path to the web page content file
     full_context = parse_files_and_web_page(data_dir, web_page_file)
 
     # Output the combined content to a new file
-    output_file = Path("ndis_agent/data/processed/combined_content.txt")
+    output_file = Path("data/processed/combined_content.txt")
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_file, "w", encoding="utf-8") as f:

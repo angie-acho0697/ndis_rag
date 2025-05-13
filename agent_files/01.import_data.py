@@ -57,7 +57,7 @@ def download_file(download_url, output_path):
 
 def main():
     url = "https://dataresearch.ndis.gov.au/datasets/participant-datasets"
-    output_dir = Path("ndis_agent/data/raw")
+    output_dir = Path("data/raw")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Extract the download links and the page content
