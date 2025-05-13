@@ -1,153 +1,176 @@
-# ndis_agent
-To keep things simple, I have built this agent based on information on one webpage only.
+# NDIS Q&A Agent
 
-<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
-</a>
+[![CCDS Project template](https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter)](https://cookiecutter-data-science.drivendata.org/)
+[![FAISS](https://img.shields.io/badge/FAISS-Vector%20Search-00A98F?logo=facebook)](https://github.com/facebookresearch/faiss)
+[![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-7C3AED?logo=ollama)](https://ollama.ai)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-FF6B6B?logo=huggingface)](https://huggingface.co)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Web%20App-FF4B4B?logo=streamlit)](https://streamlit.io)
+[![LangChain](https://img.shields.io/badge/LangChain-Framework-00A67E?logo=langchain)](https://python.langchain.com)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python)](https://www.python.org)
 
- streamlit run agent_files/04.rag_app.py
-This Agent will aim to answer questions on NDIS participants
+A Q&A system built to answer questions about NDIS (National Disability Insurance Scheme) participants using Meta's Llama 3 model. This system processes NDIS data and provides accurate, context-aware answers to questions about NDIS participants.
 
-## Project Organization
 
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── README.md          <- The top-level README for developers using this project.
-├── data
-│   ├── external       <- Data from third party sources.
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
-│
-├── docs               <- A default mkdocs project; see www.mkdocs.org for details
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
-│
-├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         ndis_agent and configuration for tools like black
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-├── setup.cfg          <- Configuration file for flake8
-│
-└── ndis_agent   <- Source code for use in this project.
-    │
-    ├── __init__.py             <- Makes ndis_agent a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    └── plots.py                <- Code to create visualizations
-```
+## 🌟 Features
 
-# Setting Up Your Llama 3 Q&A System
+- **Local Processing**: All processing happens on your machine - no API costs or data privacy concerns
+- **Advanced RAG System**: Uses Retrieval-Augmented Generation (RAG) for accurate, context-aware answers
+- **Interactive UI**: Beautiful Streamlit interface for easy interaction
+- **Document Processing**: Handles multiple file formats (CSV, DOCX) and web content
+- **Vector Search**: Efficient similarity search using FAISS
+- **Customizable**: Adjustable chunk sizes and overlap for optimal performance
 
-This guide will walk you through setting up a complete Q&A system that can answer questions from your large text files using Meta's powerful Llama 3 model - all locally on your machine with no API costs.
+## 🚀 Quick Start
 
-## Step 1: Install Required Python Libraries
-
-First, create a new Python environment and install the necessary libraries:
-
+1. **Clone the repository**
 ```bash
-# Create and activate a virtual environment (recommended)
+git clone [repository-url]
+cd ndis_agent
+```
+
+2. **Create and activate virtual environment**
+```bash
 python -m venv ndis_qa_env
 source ndis_qa_env/bin/activate  # On Windows: ndis_qa_env\Scripts\activate
-
-# Install required packages
-pip install langchain langchain-community faiss-cpu sentence-transformers streamlit
 ```
 
-## Step 2: Install Ollama
+3. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-Ollama is a tool that makes it easy to run large language models like Llama 3 locally.
-
-### On macOS or Linux:
+4. **Install Ollama**
+- **Windows**: Download from [Ollama Windows](https://ollama.com/download/windows)
+- **macOS/Linux**: 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-### On Windows:
-1. Download the installer from [https://ollama.com/download/windows](https://ollama.com/download/windows)
-2. Run the installer and follow the prompts
-
-## Step 3: Download and Install Llama 3
-
-After installing Ollama, download the Llama 3 model:
-
+5. **Download Llama 3**
 ```bash
-# Open a terminal/command prompt and run:
 ollama pull llama3
 ```
 
-This will download the model (about 4GB). Wait for it to complete.
-
-## Step 5: Run the Application
-
-Make sure Ollama is running in the background, then launch the Streamlit interface:
-
+6. **Run the application**
 ```bash
-streamlit run 04.rag_app.py
+streamlit run agent_files/04.rag_app.py
 ```
 
-The web interface will open in your browser.
+## 📁 Project Structure
 
-## Step 6: Using the Q&A System
-
-2. The system will process all the information from the ndis webpage, creating chunks and building a vector index using FAISS
-3. Once processing is complete, you can start asking questions
-4. Type your questions in the chat input and get answers generated by Llama 3
-
-## Advanced Options
-
-### Command Line Usage
-
-You can also use the system directly from the command line:
-
-```bash
-python 03.qanda_rag.py --interactive
+```
+├── LICENSE            <- Open-source license
+├── Makefile          <- Makefile with convenience commands
+├── README.md         <- Project documentation
+├── config.yaml       <- Configuration settings
+├── requirements.txt  <- Python dependencies
+├── pyproject.toml    <- Project metadata and tool configuration
+├── data/            <- Data directory
+│   ├── external/    <- Third-party data
+│   ├── interim/     <- Intermediate data
+│   ├── processed/   <- Final datasets
+│   └── raw/        <- Original data
+└── agent_files/     <- Core application files
+    ├── 01.import_data.py    <- Data collection script
+    ├── 02.parse_files.py    <- Data processing script
+    ├── 03.qanda_rag.py      <- RAG system implementation
+    └── 04.rag_app.py        <- Streamlit application
 ```
 
-### Saving and Loading Indexes
+## 🔧 How It Works
 
-To avoid reprocessing large files, you can save the vector index:
-1. In the web interface, use the "Save Index" button in the sidebar
-2. Give your index a name
-3. Later, use "Load Index" to reload it without reprocessing the file
+1. **Data Collection** (`agent_files/01.import_data.py`)
+   - Scrapes NDIS participant data from the official website
+   - Downloads relevant CSV and DOCX files
+   - Extracts and saves web page content
 
-### Performance Optimization
+2. **Data Processing** (`agent_files/02.parse_files.py`)
+   - Combines content from multiple sources
+   - Processes different file formats
+   - Creates a unified knowledge base
 
-- For better performance, consider running on a machine with a GPU
-- If you have sufficient GPU memory (16GB+), you can try the larger 70B parameter model:
+3. **Q&A System** (`agent_files/03.qanda_rag.py`, `agent_files/04.rag_app.py`)
+   - Splits documents into manageable chunks
+   - Creates vector embeddings using sentence transformers
+   - Builds a FAISS index for efficient similarity search
+   - Uses Llama 3 for generating accurate answers
+   - Provides a user-friendly Streamlit interface
+
+## ⚙️ Configuration
+
+The system can be configured through `config.yaml`:
+```yaml
+ollama_path: "path/to/ollama"
+model_name: "llama3"
+embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+chunk_size: 3000
+chunk_overlap: 100
+file_path: "path/to/your/data"
+```
+
+## 🎯 Usage
+
+1. Ensure Ollama is running in the background
+2. Launch the application using `streamlit run agent_files/04.rag_app.py`
+3. Wait for the system to process the knowledge base
+4. Type your questions in the chat interface
+5. View answers with source references
+
+## ⚡ Performance Considerations
+
+- For better performance, use a machine with GPU
+- Adjust chunk sizes and overlap based on your needs
+- For larger datasets, consider using the 70B parameter model:
   ```bash
   ollama pull llama3:70b
-  ```
-  Then modify the code to use `llama3:70b` instead of just `llama3`
+  ```  
 
-## Troubleshooting
+## 🔍 Troubleshooting
 
-- If you encounter CUDA/GPU errors, try forcing CPU usage
-- If the model is too slow, try reducing chunk sizes or using a smaller embedding model
-- If answers lack detail, try increasing the number of chunks retrieved (k_retrieval parameter)
-- If you have trouble with finding where ollama is downloaded, type where ollama.exe for Windows to see the correct path
+- **CUDA/GPU Errors**: Try forcing CPU usage
+- **Slow Performance**: Reduce chunk sizes or use a smaller embedding model
+- **Incomplete Answers**: Increase the number of retrieved chunks
+- **Ollama Location**: Use `where ollama.exe` (Windows) to find the correct path
+
+
+## ⚠️ Important Disclaimer
+
+**This project is for learning and experimentation purposes only. It is not affiliated with, endorsed by, or connected to the National Disability Insurance Scheme (NDIS) in any way.**
+
+### Data Usage and Licensing
+The NDIS data used in this project is publicly available and is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license. This license allows:
+- Sharing (copying and redistributing the material)
+- Adapting (remixing, transforming, and building upon the material)
+- Using for educational, research, and non-commercial purposes
+
+
+## 📝 Important Notes
+- This is a demonstration project showcasing the use of RAG (Retrieval-Augmented Generation) systems with public data
+- The answers provided by this system should not be considered official NDIS advice or information
+- For accurate and official NDIS information, please visit [the official NDIS website](https://www.ndis.gov.au)
+- This project is intended for educational and research purposes only
+- **Performance Consideration**: The local RAG implementation used in this project may exhibit slower response times compared to direct API calls to language models. Users should be aware of this performance characteristic when utilizing the system
+- **Testing Configuration**: For initial testing and development purposes, users may substitute the full dataset (`combined_content.txt`) with a smaller sample dataset (`combined_content_sml.txt`). This abridged version contains a subset of the parsed content and is recommended for preliminary testing and validation
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2025, Angelica Chowdhury
+
+The MIT License is a permissive license that is short and to the point. It lets people do anything they want with your code as long as they provide attribution back to you and don't hold you liable.
+
+Key permissions under MIT License:
+- Commercial use
+- Modification
+- Distribution
+- Private use
+
+For more information about the MIT License, visit [choosealicense.com/licenses/mit/](https://choosealicense.com/licenses/mit/)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 --------
 
