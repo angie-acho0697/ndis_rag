@@ -1,4 +1,3 @@
-# Import the Llama3QASystem class (assumes it's defined in a file named qanda_rag.py)
 import importlib.util
 import os
 from pathlib import Path
@@ -6,10 +5,41 @@ import platform
 import subprocess
 import sys
 import threading
+import re
 
 import streamlit as st
+import yaml
 
-OLLAMA_PATH = r"C:\Users\AngelicaChowdhury\AppData\Local\Programs\Ollama\ollama.exe"
+
+# Load config
+def load_config():
+    config_path = Path(__file__).parent.parent / "config.yaml"
+    print("Looking for config at:", config_path.resolve())
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+
+config = load_config()
+
+st.set_page_config(
+    page_title="NDIS Q&A System",
+    page_icon=":guardsman:",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
+
+OLLAMA_PATH = config.get("ollama_path")
+MODEL_NAME = config.get("model_name", "llama3")
+EMBEDDING_MODEL = config.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+CHUNK_SIZE = config.get("chunk_size", 3000)
+CHUNK_OVERLAP = config.get("chunk_overlap", 100)
+FILE_PATH = config.get("file_path")
+
 module_path = os.path.join(os.path.dirname(__file__), "03.qanda_rag.py")
 module_name = "qanda_rag_temp"
 
@@ -81,20 +111,8 @@ def get_ollama_install_instructions() -> str:
 
 
 def main():
-    st.set_page_config(
-        page_title="NDIS Q&A System",
-        page_icon=":guardsman:",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-
     current_dir = Path(__file__).parent
-    logo_path = (
-        current_dir.parent
-        / "data"
-        / "external"
-        / "National_Disability_Insurance_Scheme_logo.svg.png"
-    )
+    logo_path = current_dir.parent / "data" / "external" / "logo.png"
 
     st.image(str(logo_path), width=150)
     st.title("NDIS Q&A System")
@@ -129,20 +147,8 @@ def main():
                     thread = threading.Thread(target=download_llama3_bg, args=(download_status,))
                     thread.start()
 
-            # Select embedding model
             st.subheader("Embedding Model")
-            embedding_options = [
-                "sentence-transformers/all-MiniLM-L6-v2",  # Fast, small (~80MB)
-                "sentence-transformers/all-mpnet-base-v2",  # Better quality (~420MB)
-                "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",  # Multilingual
-            ]
-            embedding_model = st.selectbox(
-                "Select Embedding Model",
-                options=embedding_options,
-                index=0,
-                help="Model used for text embeddings. MiniLM is faster, mpnet is more accurate.",
-            )
-
+            st.info(EMBEDDING_MODEL)
         else:
             st.error("❌ Ollama is not installed")
             st.markdown("### Installation Instructions:")
@@ -154,32 +160,21 @@ def main():
             )
             return
 
-        # Document Processing Settings
         st.subheader("Document Processing")
-        chunk_size = st.slider(
-            "Chunk Size",
-            min_value=500,
-            max_value=4000,
-            value=1000,
-            step=100,
-            help="Size of text chunks for processing. Larger chunks provide more context but may reduce precision.",
-        )
+        st.info(f"**Chunk Size:** {CHUNK_SIZE}")
+        st.info(f"**Chunk Overlap:** {CHUNK_OVERLAP}")
 
-        chunk_overlap = st.slider(
-            "Chunk Overlap",
-            min_value=0,
-            max_value=500,
-            value=200,
-            step=50,
-            help="Overlap between chunks to maintain context across chunk boundaries.",
-        )
-
-        # Index Management
         st.subheader("Index Management")
-        index_name = st.text_input("Index Name", value="llama3_qa_index")
-        col1, col2 = st.columns(2)
-        save_index = col1.button("Save Index")
-        load_index = col2.button("Load Index")
+        index_name = "ndis_participant_index"
+        st.markdown(
+            f"""
+            <div style="background-color:#4B2E5E;padding:12px 16px;border-radius:8px;color:white;font-weight:bold;margin-bottom:8px;">
+                {index_name}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption("The index will be loaded if it exists, or created and saved automatically.")
 
     # Initialize session state
     if "qa_system" not in st.session_state:
@@ -190,7 +185,7 @@ def main():
         st.session_state.chat_history = []
 
     # Path to your combined_content.txt file
-    combined_file_path = Path("data/processed/combined_content.txt").resolve()
+    index_dir = Path("data/processed") / index_name
 
     # Warning if Llama 3 is not available
     if not llama3_available and ollama_installed:
@@ -198,67 +193,66 @@ def main():
             "⚠️ Llama 3 model is not downloaded yet. Please download it from the sidebar before proceeding."
         )
 
-    # Process the combined_content.txt file (only once)
-    if not st.session_state.file_processed and llama3_available:
-        if not combined_file_path.exists():
-            st.error(f"Knowledge file not found: {combined_file_path}")
+    # Track last-used settings
+    settings = {
+        "file_path": FILE_PATH,
+        "chunk_size": CHUNK_SIZE,
+        "chunk_overlap": CHUNK_OVERLAP,
+        "model_name": MODEL_NAME,
+        "embedding_model": EMBEDDING_MODEL,
+    }
+
+    # Only rebuild if settings have changed or not processed yet
+    file_path_obj = Path(FILE_PATH).resolve()
+    if (
+        not st.session_state.get("qa_system")
+        or not st.session_state.get("file_processed")
+        or st.session_state.get("last_settings") != settings
+    ) and llama3_available:
+        if not file_path_obj.exists():
+            st.error(f"Knowledge file not found: {file_path_obj}")
         else:
-            with st.spinner("Processing the knowledge base with Llama 3..."):
-                try:
-                    st.session_state.qa_system = Llama3QASystem(
-                        file_path=str(combined_file_path),
-                        chunk_size=chunk_size,
-                        chunk_overlap=chunk_overlap,
-                        model_name="llama3",  # Explicitly use llama3
-                        embedding_model=embedding_model,
-                    )
-                    success = st.session_state.qa_system.setup()
-                    if success:
+            with st.spinner("Setting up the knowledge base with Llama 3..."):
+                qa_system = Llama3QASystem(
+                    file_path=str(file_path_obj),
+                    chunk_size=CHUNK_SIZE,
+                    chunk_overlap=CHUNK_OVERLAP,
+                    model_name=MODEL_NAME,
+                    embedding_model=EMBEDDING_MODEL,
+                )
+                # Try to load the index first
+                index_file = index_dir
+                if index_file.exists():
+                    loaded = qa_system.load_index(index_file)
+                    if loaded:
+                        qa_system.setup_qa_chain()
+                        st.session_state.qa_system = qa_system
                         st.session_state.file_processed = True
+                        st.session_state.last_settings = settings
                         st.success(
-                            f"Knowledge base processed successfully with Llama 3! You can now ask questions."
+                            f"Index '{index_name}' loaded successfully! You can now ask questions."
                         )
                     else:
+                        st.session_state.qa_system = None
+                        st.session_state.file_processed = False
+                        st.error(f"Failed to load index '{index_name}'.")
+                else:
+                    # Build and save the index if it doesn't exist
+                    success = qa_system.setup()
+                    if success:
+                        qa_system.save_index(index_name)
+                        st.session_state.qa_system = qa_system
+                        st.session_state.file_processed = True
+                        st.session_state.last_settings = settings
+                        st.success(
+                            f"Knowledge base processed and index saved as '{index_name}'! You can now ask questions."
+                        )
+                    else:
+                        st.session_state.qa_system = None
+                        st.session_state.file_processed = False
                         st.error(
                             "Error processing the knowledge base. Please check the console for details."
                         )
-                except Exception as e:
-                    st.error(f"Error initializing the QA system: {str(e)}")
-
-    # Save index if requested
-    if save_index and st.session_state.qa_system:
-        with st.spinner("Saving index..."):
-            success = st.session_state.qa_system.save_index(index_name)
-            if success:
-                st.sidebar.success(f"Index saved as '{index_name}'")
-            else:
-                st.sidebar.error("Failed to save index")
-
-    # Load index if requested
-    if load_index:
-        if not llama3_available:
-            st.sidebar.error(
-                "Cannot load index: Llama 3 model is not available. Please download it first."
-            )
-        else:
-            index_path = Path(index_name)
-            if index_path.exists():
-                with st.spinner("Loading index..."):
-                    if st.session_state.qa_system is None:
-                        # Create a minimal QA system if none exists
-                        st.session_state.qa_system = Llama3QASystem(
-                            model_name="llama3", embedding_model=embedding_model
-                        )
-
-                    success = st.session_state.qa_system.load_index(index_name)
-                    if success:
-                        st.session_state.qa_system.setup_qa_chain()
-                        st.session_state.file_processed = True
-                        st.sidebar.success(f"Index '{index_name}' loaded successfully")
-                    else:
-                        st.sidebar.error(f"Failed to load index '{index_name}'")
-            else:
-                st.sidebar.error(f"Index '{index_name}' not found")
 
     # Question asking area
     st.header("Ask Questions")
@@ -283,7 +277,7 @@ def main():
             with st.chat_message("assistant"):
                 with st.spinner("Llama 3 is thinking..."):
                     result = st.session_state.qa_system.answer_question(question)
-                    answer = result["answer"]
+                    answer = Llama3QASystem.clean_llama_output(result["answer"])
                     st.write(answer)
 
                     # Show sources in an expander

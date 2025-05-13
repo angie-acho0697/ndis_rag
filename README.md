@@ -5,6 +5,7 @@ To keep things simple, I have built this agent based on information on one webpa
     <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
 </a>
 
+ streamlit run agent_files/04.rag_app.py
 This Agent will aim to answer questions on NDIS participants
 
 ## Project Organization
