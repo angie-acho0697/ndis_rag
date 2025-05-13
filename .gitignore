@@ -1,9 +1,8 @@
 # Data
-echo "data/processed/combined_content.txt" >> .gitignore
-echo "data/processed/combined_content_sml.txt" >> .gitignore
-echo "data/raw/*" >> .gitignore
-echo "data/interim/*" >> .gitignore
-echo "data/external/*" >> .gitignore
+data/processed/*
+data/raw/*
+data/interim/*
+data/external/*
 
 # Mac OS-specific storage files
 .DS_Store
