@@ -1,4 +1,4 @@
-# NDIS Q&A Agent
+# NDIS Q&A RAG System
 
 [![CCDS Project template](https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter)](https://cookiecutter-data-science.drivendata.org/)
 [![FAISS](https://img.shields.io/badge/FAISS-Vector%20Search-00A98F?logo=facebook)](https://github.com/facebookresearch/faiss)
@@ -8,7 +8,7 @@
 [![LangChain](https://img.shields.io/badge/LangChain-Framework-00A67E?logo=langchain)](https://python.langchain.com)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python)](https://www.python.org)
 
-A Q&A system built to answer questions about NDIS (National Disability Insurance Scheme) participants using Meta's Llama 3 model. This system processes NDIS data and provides accurate, context-aware answers to questions about NDIS participants.
+A Q&A system built to answer questions about NDIS (National Disability Insurance Scheme) participants using Meta's Llama 3 model. This system processes NDIS data and aims to provide accurate, context-aware answers to questions about NDIS participants.
 
 
 ## 🌟 Features
@@ -17,7 +17,7 @@ A Q&A system built to answer questions about NDIS (National Disability Insurance
 - **Advanced RAG System**: Uses Retrieval-Augmented Generation (RAG) for accurate, context-aware answers
 - **Interactive UI**: Beautiful Streamlit interface for easy interaction
 - **Document Processing**: Handles multiple file formats (CSV, DOCX) and web content
-- **Vector Search**: Efficient similarity search using FAISS
+- **Vector Search**: Similarity search using FAISS
 - **Customizable**: Adjustable chunk sizes and overlap for optimal performance
 
 ## 🚀 Quick Start
@@ -148,7 +148,6 @@ The NDIS data used in this project is publicly available and is licensed under t
 - This is a demonstration project showcasing the use of RAG (Retrieval-Augmented Generation) systems with public data
 - The answers provided by this system should not be considered official NDIS advice or information
 - For accurate and official NDIS information, please visit [the official NDIS website](https://www.ndis.gov.au)
-- This project is intended for educational and research purposes only
 - **Performance Consideration**: The local RAG implementation used in this project may exhibit slower response times compared to direct API calls to language models. Users should be aware of this performance characteristic when utilising the system
 - **Testing Configuration**: For initial testing and development purposes, users may substitute the full dataset created from the 02.parse_files.py file with a smaller sample dataset. This should contain a subset of the parsed content and is recommended for preliminary testing and validation
 
