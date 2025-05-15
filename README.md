@@ -1,4 +1,4 @@
-# NDIS Q&A Agent
+# NDIS Q&A RAG System
 
 [![CCDS Project template](https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter)](https://cookiecutter-data-science.drivendata.org/)
 [![FAISS](https://img.shields.io/badge/FAISS-Vector%20Search-00A98F?logo=facebook)](https://github.com/facebookresearch/faiss)
