@@ -12,4 +12,8 @@ ruff
 scikit-learn
 docx
 python-docx
--e .
+streamlit
+tqdm
+langchain-community
+langchain_huggingface
+langchain_ollama

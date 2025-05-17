@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "ndis_agent"
+name = "ndis_rag"
 version = "0.0.1"
 description = "This Agent will aim to answer questions on NDIS participants"
 authors = [
@@ -20,13 +20,13 @@ requires-python = "~=3.11.0"
 
 [tool.ruff]
 line-length = 99
-src = ["ndis_agent"]
-include = ["pyproject.toml", "ndis_agent/**/*.py"]
+src = ["ndis_rag"]
+include = ["pyproject.toml", "ndis_rag/**/*.py"]
 
 [tool.ruff.lint]
 extend-select = ["I"]  # Add import sorting
 
 [tool.ruff.lint.isort]
-known-first-party = ["ndis_agent"]
+known-first-party = ["ndis_rag"]
 force-sort-within-sections = true
 

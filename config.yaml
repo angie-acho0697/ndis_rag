@@ -1,4 +1,4 @@
-ollama_path: "C:/Users/AngelicaChowdhury/AppData/Local/Programs/Ollama/ollama.exe"
+ollama_path: "C:/Users/seal9/AppData/Local/Programs/Ollama/ollama.exe"
 model_name: "llama3:8b"
 embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
 chunk_size: 1000
