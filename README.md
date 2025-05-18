@@ -23,12 +23,15 @@ A Q&A system built to answer questions about NDIS (National Disability Insurance
 
 1. **Clone the repository**
 
+
 ```bash
 git clone [repository-url]
+cd ndis_rag
 cd ndis_rag
 ```
 
 2. **Create and activate virtual environment**
+
 
 ```bash
 python -m venv ndis_qa_env
@@ -36,6 +39,7 @@ ndis_qa_env\Scripts\activate
 ```
 
 3. **Install dependencies**
+
 
 ```bash
 pip install -r requirements.txt
@@ -47,8 +51,17 @@ Download and install Ollama from [Ollama Windows](https://ollama.com/download/wi
 
 5. **Download Llama 3**
 
+
 ```bash
 ollama pull llama3
+```
+
+7. **Run the data prep**
+
+```bash
+python agent_files/01.import_data.py
+python agent_files/02.parse_file.py
+
 ```
 
 6. **Run the data prep**
@@ -101,11 +114,13 @@ The following are the specifications of the system used for development and test
 
 1. **Data Collection** (`agent_files/01.import_data.py`)
 
+
    - Scrapes NDIS participant data from the official website
    - Downloads relevant CSV and DOCX files
    - Extracts and saves web page content
 
 2. **Data Processing** (`agent_files/02.parse_files.py`)
+
 
    - Combines content from multiple sources
    - Processes different file formats
@@ -121,6 +136,7 @@ The following are the specifications of the system used for development and test
 ## ⚙️ Configuration
 
 The system can be configured through `config.yaml`:
+
 
 ```yaml
 ollama_path: "path/to/ollama"
@@ -147,6 +163,7 @@ file_path: "path/to/your/data"
   ```bash
   ollama pull llama3:70b
   ```
+  ```
 
 ## 🔍 Troubleshooting
 
@@ -161,13 +178,16 @@ file_path: "path/to/your/data"
 
 ### Data Usage and Licensing
 
+
 The NDIS data used in this project is publicly available and is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license. This license allows:
+
 
 - Sharing (copying and redistributing the material)
 - Adapting (remixing, transforming, and building upon the material)
 - Using for educational, research, and non-commercial purposes
 
 ## 📝 Important Notes
+
 
 - This is a demonstration project showcasing the use of RAG (Retrieval-Augmented Generation) systems with public data
 - The answers provided by this system should not be considered official NDIS advice or information
@@ -185,6 +205,7 @@ The MIT License is a permissive license that is short and to the point. It lets 
 
 Key permissions under MIT License:
 
+
 - Commercial use
 - Modification
 - Distribution
@@ -196,4 +217,5 @@ For more information about the MIT License, visit [choosealicense.com/licenses/m
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+---
 ---
