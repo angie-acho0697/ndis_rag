@@ -16,7 +16,11 @@ def load_config():
     config_path = Path(__file__).parent.parent / "config.yaml"
     print("Looking for config at:", config_path.resolve())
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+        # Expand environment variables in the Ollama path
+        if "ollama_path" in config:
+            config["ollama_path"] = os.path.expandvars(config["ollama_path"])
+        return config
 
 
 config = load_config()
