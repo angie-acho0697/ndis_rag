@@ -5,6 +5,8 @@ import time
 from typing import Any, Dict
 from tqdm import tqdm
 import re
+import numpy as np
+import faiss
 
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -76,10 +78,12 @@ class Llama3QASystem:
             length_function=len,
             separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
             keep_separator=True,
-            is_separator_regex=False
+            is_separator_regex=False,
         )
         texts = text_splitter.split_text(text)
-        self.documents = [Document(page_content=t, metadata={"source": str(i)}) for i, t in enumerate(texts)]
+        self.documents = [
+            Document(page_content=t, metadata={"source": str(i)}) for i, t in enumerate(texts)
+        ]
         print(
             f"Data loaded and split into {len(self.documents)} chunks in {time.time() - t0:.2f} seconds."
         )
@@ -100,17 +104,21 @@ class Llama3QASystem:
         for i in tqdm(range(0, len(texts), batch_size), desc="Embedding batches"):
             batch = texts[i : i + batch_size]
             batch_embeddings = self.embedding_model.embed_documents(batch)
+            # Normalize embeddings
+            batch_embeddings = [emb / np.linalg.norm(emb) for emb in batch_embeddings]
             embeddings.extend(batch_embeddings)
 
-        print(f"Embeddings generated in {time.time() - t0:.2f} seconds.")
+        print(f"Embeddings generated and normalized in {time.time() - t0:.2f} seconds.")
 
+        # Create FAISS index using langchain's implementation
         self.vectorstore = FAISS.from_embeddings(
             text_embeddings=list(zip(texts, embeddings)),
             embedding=self.embedding_model,
             metadatas=[{"source": str(i)} for i in range(len(texts))],
+            normalize_L2=True,
         )
-        print(f"FAISS index built in {time.time() - t0:.2f} seconds.")
-        print(f"Vector index built successfully in {time.time() - t0:.2f} seconds.")
+
+        print(f"Optimized FAISS index built in {time.time() - t0:.2f} seconds.")
         return True
 
     def setup_qa_chain(self):
@@ -119,33 +127,43 @@ class Llama3QASystem:
             print("Vector store not initialized. Please build index first.")
             return False
 
-        prompt_template = """<s>[INST] <<SYS>>
-You are a helpful AI assistant built for the National Disability Insurance Scheme which is an Australian government initiative that provides funding and support to individuals with permanent and significant disabilities.
-You answers questions based on the provided context.
-Your goal is to give accurate, factual information by carefully analyzing the context below.
-If the information to answer the question is not in the context, admit that you don't know rather than making up an answer.
-If you need to supplement the context with your own knowledge, do so only if it is relevant and factual.
-You are not allowed to make up information or provide opinions.
-When you use information from the context, reference the specific part you're using.
-<</SYS>>
+        prompt_template = prompt_template = """<s>[INST] <<SYS>>
+        You are a helpful AI assistant built for the National Disability Insurance Scheme (NDIS), an Australian government initiative that provides funding and support to individuals with permanent and significant disabilities.
 
-Context:
-{context}
+        You answer questions based only on the provided context below. Your goal is to provide accurate, factual responses grounded in the context. If the information is not found in the context, say "The answer is not available in the provided context."
 
-Question: {question}
+        You must not fabricate information, speculate, or express opinions. When using the context, cite or paraphrase the relevant part clearly.
 
-Answer the question thoroughly and accurately based only on the provided context. [/INST]"""
+        If appropriate, structure the answer in bullet points or sections.
+        <</SYS>>
+
+        Context:
+        {context}
+
+        Question:
+        {question}
+
+        Instructions:
+        - Use only the above context to answer.
+        - If the answer cannot be determined from the context, explicitly say so.
+        - Do not guess or provide irrelevant information.
+        - Be concise but thorough.
+
+        Answer:
+        [/INST]
+        """
 
         PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
 
-        # Configure a more sophisticated retriever
+        # Configure a more sophisticated retriever with optimized top-k settings
         retriever = self.vectorstore.as_retriever(
             search_type="mmr",  # Use Maximum Marginal Relevance for better diversity
             search_kwargs={
-                "k": 4,  # Retrieve more documents
-                "fetch_k": 20,  # Consider more candidates
-                "lambda_mult": 0.7  # Balance between relevance and diversity
-            }
+                "k": 6,  # Increased from 4 to 6 for better coverage
+                "fetch_k": 30,  # Increased from 20 to 30 to consider more candidates
+                "lambda_mult": 0.7,  # Balance between relevance and diversity
+                "score_threshold": 0.7,  # Only return documents with similarity score above threshold
+            },
         )
 
         self.qa_chain = RetrievalQA.from_chain_type(

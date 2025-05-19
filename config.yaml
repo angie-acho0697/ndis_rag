@@ -1,11 +1,11 @@
 ollama_path: "C:/Users/${USERNAME}/AppData/Local/Programs/Ollama/ollama.exe"
 model_name: "llama3:8b"
-embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+embedding_model: "BAAI/bge-large-en-v1.5" #"sentence-transformers/all-MiniLM-L6-v2" "BAAI/bge-large-en-v1.5"
 chunk_size: 500
 chunk_overlap: 150
 file_path: "data/processed/combined_content.txt"
 
 file_patterns:
   - "Participant_numbers_and_plan_budgets_data_*"
-  - "Utilisation_of_plan_budget_data_*"
+  # - "Utilisation_of_plan_budget_data_*"
   - "web_page_content.txt"
