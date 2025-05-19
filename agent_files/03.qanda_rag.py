@@ -2,7 +2,7 @@ from functools import lru_cache
 import os
 from pathlib import Path
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 from tqdm import tqdm
 import re
 import numpy as np
@@ -62,6 +62,55 @@ class Llama3QASystem:
             print("Make sure Ollama is installed and running, and the Llama 3 model is downloaded")
             print("You can download Llama 3 using: ollama pull llama3")
 
+    def _detect_tables(self, text: str) -> List[str]:
+        """Detect and extract tables from text."""
+        # Look for common table patterns
+        table_patterns = [
+            r'(\|[^\n]+\|\n)+',  # Markdown tables
+            r'(\+[-+]+\+\n\|[^\n]+\|\n)+',  # ASCII tables
+            r'(\s*[-+]+\s*\n\|[^\n]+\|\n)+',  # Alternative ASCII tables
+        ]
+        
+        tables = []
+        for pattern in table_patterns:
+            matches = re.finditer(pattern, text)
+            for match in matches:
+                tables.append(match.group(0))
+        return tables
+
+    def _detect_headings(self, text: str) -> List[tuple]:
+        """Detect headings and their content."""
+        # Common heading patterns
+        heading_patterns = [
+            (r'^#+\s+(.+)$', 'markdown'),  # Markdown headings
+            (r'^[A-Z][A-Za-z\s]+:$', 'title'),  # Title case headings
+            (r'^\d+\.\s+[A-Z][A-Za-z\s]+$', 'numbered'),  # Numbered headings
+        ]
+        
+        lines = text.split('\n')
+        headings = []
+        current_heading = None
+        current_content = []
+        
+        for line in lines:
+            is_heading = False
+            for pattern, style in heading_patterns:
+                if re.match(pattern, line):
+                    if current_heading:
+                        headings.append((current_heading, '\n'.join(current_content)))
+                    current_heading = line
+                    current_content = []
+                    is_heading = True
+                    break
+            
+            if not is_heading and current_heading:
+                current_content.append(line)
+        
+        if current_heading:
+            headings.append((current_heading, '\n'.join(current_content)))
+            
+        return headings
+
     def load_data(self):
         t0 = time.time()
         print(f"Loading data from {self.file_path}...")
@@ -72,6 +121,22 @@ class Llama3QASystem:
             print(f"Error loading file: {e}")
             return False
 
+        # First, extract tables
+        tables = self._detect_tables(text)
+        table_docs = [Document(page_content=t, metadata={"source": f"table_{i}", "type": "table"}) 
+                     for i, t in enumerate(tables)]
+        
+        # Remove tables from main text to avoid double processing
+        for table in tables:
+            text = text.replace(table, "")
+        
+        # Then, extract headings and their content
+        headings = self._detect_headings(text)
+        heading_docs = [Document(page_content=f"{h}\n{c}", 
+                               metadata={"source": f"heading_{i}", "type": "heading"})
+                       for i, (h, c) in enumerate(headings)]
+        
+        # For remaining text, use the original chunking strategy
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
             chunk_overlap=self.chunk_overlap,
@@ -80,13 +145,18 @@ class Llama3QASystem:
             keep_separator=True,
             is_separator_regex=False,
         )
-        texts = text_splitter.split_text(text)
-        self.documents = [
-            Document(page_content=t, metadata={"source": str(i)}) for i, t in enumerate(texts)
-        ]
+        
+        remaining_texts = text_splitter.split_text(text)
+        remaining_docs = [Document(page_content=t, metadata={"source": str(i), "type": "text"}) 
+                         for i, t in enumerate(remaining_texts)]
+        
+        # Combine all documents
+        self.documents = table_docs + heading_docs + remaining_docs
+        
         print(
             f"Data loaded and split into {len(self.documents)} chunks in {time.time() - t0:.2f} seconds."
         )
+        print(f"Found {len(table_docs)} tables, {len(heading_docs)} heading sections, and {len(remaining_docs)} text chunks.")
         return True
 
     def build_index(self):
