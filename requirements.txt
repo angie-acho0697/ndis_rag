@@ -17,3 +17,4 @@ tqdm
 langchain-community
 langchain_huggingface
 langchain_ollama
+faiss-cpu
