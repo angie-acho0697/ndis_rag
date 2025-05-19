@@ -71,10 +71,15 @@ class Llama3QASystem:
             return False
 
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap, length_function=len
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            length_function=len,
+            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""],
+            keep_separator=True,
+            is_separator_regex=False
         )
         texts = text_splitter.split_text(text)
-        self.documents = [Document(page_content=t) for t in texts]
+        self.documents = [Document(page_content=t, metadata={"source": str(i)}) for i, t in enumerate(texts)]
         print(
             f"Data loaded and split into {len(self.documents)} chunks in {time.time() - t0:.2f} seconds."
         )
@@ -133,13 +138,20 @@ Answer the question thoroughly and accurately based only on the provided context
 
         PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
 
+        # Configure a more sophisticated retriever
+        retriever = self.vectorstore.as_retriever(
+            search_type="mmr",  # Use Maximum Marginal Relevance for better diversity
+            search_kwargs={
+                "k": 4,  # Retrieve more documents
+                "fetch_k": 20,  # Consider more candidates
+                "lambda_mult": 0.7  # Balance between relevance and diversity
+            }
+        )
+
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             chain_type="stuff",
-            retriever=self.vectorstore.as_retriever(
-                search_type="similarity",
-                search_kwargs={"k": 2},
-            ),
+            retriever=retriever,
             return_source_documents=True,
             chain_type_kwargs={"prompt": PROMPT},
         )

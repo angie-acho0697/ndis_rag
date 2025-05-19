@@ -3,7 +3,14 @@ import docx
 import pandas as pd
 from tqdm import tqdm
 import time
+import yaml
+from fnmatch import fnmatch
 
+
+# Load config
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+file_patterns = config.get("file_patterns", None)
 
 def parse_files_and_web_page(directory, web_page_file):
     combined_content = []
@@ -21,7 +28,11 @@ def parse_files_and_web_page(directory, web_page_file):
             print(f"Error reading web page file {web_page_file}: {e}")
 
     # Get list of files to process
-    files = list(Path(directory).glob("*"))
+    all_files = list(Path(directory).glob("*"))
+    if file_patterns:
+        files = [f for f in all_files if any(fnmatch(f.name, pat) for pat in file_patterns)]
+    else:
+        files = all_files
     print(f"\nFound {len(files)} files to process")
 
     # Parse CSV and DOCX files

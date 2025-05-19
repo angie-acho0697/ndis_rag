@@ -68,7 +68,7 @@ python agent_files/02.parse_file.py
 
 ```bash
 python agent_files/01.import_data.py
-python agent_files/02.parse_file.py
+python agent_files/02.parse_files.py
 ```
 
 7. **Run the application**
@@ -135,7 +135,7 @@ The following are the specifications of the system used for development and test
 
 ## ⚙️ Configuration
 
-The system can be configured through `config.yaml`:
+The system can be configured through `config.yaml`. Note that I have created the system on a subset of data. You can specify the files you want the system to be based on in here under the `file_patterns` parameter. If you want to create the rag system on all datasets, you will need to do further fine tuning with a much more powerful machine, and remove or comment out the `file_patterns` parameter.
 
 
 ```yaml
@@ -145,6 +145,12 @@ embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
 chunk_size: 3000
 chunk_overlap: 100
 file_path: "path/to/your/data"
+# (Optional) Patterns for files to include in processing.
+# If omitted or left empty, all files in the directory will be processed.
+file_patterns:
+   - "Participant_numbers_and_plan_budgets_data_"
+   - "Utilisation_of_plan_budget_data_"
+   - "web_page_content.txt"
 ```
 
 ## 🎯 Usage
