@@ -1,11 +1,13 @@
 ollama_path: "C:/Users/${USERNAME}/AppData/Local/Programs/Ollama/ollama.exe"
-model_name: "llama3:8b"
+model_name: "mistral" # llama3:8b
 embedding_model: "BAAI/bge-large-en-v1.5" #"sentence-transformers/all-MiniLM-L6-v2" "BAAI/bge-large-en-v1.5"
-chunk_size: 500
-chunk_overlap: 150
+chunk_size: 2000
+chunk_overlap: 400
 file_path: "data/processed/combined_content.txt"
 
 file_patterns:
-  - "Participant_numbers_and_plan_budgets_data_*"
-  # - "Utilisation_of_plan_budget_data_*"
+  - "Participant_numbers_and_plan_budgets_data_December_2024*"
+  - "Participant_numbers_and_plan_budgets_data_rules_DOCX*"
+  - "Utilisation_of_Plan_budgets_data_December_2024_*"
+  - "Utilisation_of_plan_budget_data_rules*"
   - "web_page_content.txt"

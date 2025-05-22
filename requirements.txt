@@ -10,11 +10,18 @@ pytest
 python-dotenv
 ruff
 scikit-learn
+chardet
 docx
 python-docx
 streamlit
 tqdm
+langchain
 langchain-community
 langchain_huggingface
-langchain_ollama
+langchain-ollama
 faiss-cpu
+openpyxl
+pandas
+numpy
+spacy
+# python -m spacy download en_core_web_sm

@@ -12,6 +12,18 @@ with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 file_patterns = config.get("file_patterns", None)
 
+def extract_docx_tables(doc):
+    """Extract tables from a DOCX document and format them as text."""
+    table_texts = []
+    for table in doc.tables:
+        table_text = []
+        for row in table.rows:
+            # Get cell text and handle empty cells
+            row_text = [cell.text.strip() if cell.text.strip() else "" for cell in row.cells]
+            table_text.append(" | ".join(row_text))
+        table_texts.append("\n".join(table_text))
+    return "\n\n".join(table_texts)
+
 def parse_files_and_web_page(directory, web_page_file):
     combined_content = []
     print("\nStarting data processing...")
@@ -58,11 +70,25 @@ def parse_files_and_web_page(directory, web_page_file):
                         continue
 
                 if df is not None:
-                    # Show progress for converting to string
+                    # Format CSV content with clear table structure
                     with tqdm(
                         total=1, desc=f"Converting {file_path.name} to string", leave=False
                     ) as pbar:
-                        content = df.to_string(index=False)
+                        # Get column names
+                        headers = df.columns.tolist()
+                        # Create separator line
+                        separator = "-" * (sum(len(str(h)) for h in headers) + 3 * len(headers))
+                        
+                        # Format the table
+                        table_lines = []
+                        table_lines.append(" | ".join(headers))
+                        table_lines.append(separator)
+                        
+                        # Add data rows
+                        for _, row in df.iterrows():
+                            table_lines.append(" | ".join(str(val) for val in row))
+                        
+                        content = "\n".join(table_lines)
                         combined_content.append(f"File: {file_path.name}\n{content}")
                         pbar.update(1)
                 else:
@@ -76,10 +102,23 @@ def parse_files_and_web_page(directory, web_page_file):
                 # Show progress for DOCX processing
                 with tqdm(total=1, desc=f"Processing {file_path.name}", leave=False) as pbar:
                     doc = docx.Document(file_path)
-                    content = "\n".join(
+                    
+                    # Extract paragraphs
+                    paragraph_content = "\n".join(
                         [para.text for para in doc.paragraphs if para.text.strip()]
                     )
-                    combined_content.append(f"File: {file_path.name}\n{content}")
+                    
+                    # Extract tables
+                    table_content = extract_docx_tables(doc)
+                    
+                    # Combine both contents
+                    content = []
+                    if paragraph_content:
+                        content.append(paragraph_content)
+                    if table_content:
+                        content.append("\nTables:\n" + table_content)
+                    
+                    combined_content.append(f"File: {file_path.name}\n" + "\n\n".join(content))
                     pbar.update(1)
             except Exception as e:
                 print(f"Error reading DOCX {file_path}: {e}")
