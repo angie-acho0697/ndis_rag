@@ -13,7 +13,7 @@ A Q&A system built to answer questions about NDIS (National Disability Insurance
 ## 🌟 Features
 
 - **Local Processing**: All processing happens on your machine - no API costs or data privacy concerns
-- **Advanced RAG System**: Uses Retrieval-Augmented Generation (RAG) for accurate, context-aware answers
+- **Context Aware RAG System**: Uses Retrieval-Augmented Generation (RAG) for accurate, context-aware answers
 - **Interactive UI**: Beautiful Streamlit interface for easy interaction
 - **Document Processing**: Handles multiple file formats (CSV, DOCX) and web content
 - **Vector Search**: Similarity search using FAISS
@@ -116,7 +116,7 @@ The following are the specifications of the system used for development and test
 
 
    - Scrapes NDIS participant data from the official website
-   - Downloads relevant CSV and DOCX files
+   - Downloads relevant CSV and DOCX files defined under config file
    - Extracts and saves web page content
 
 2. **Data Processing** (`agent_files/02.parse_files.py`)
@@ -137,6 +137,8 @@ The following are the specifications of the system used for development and test
 
 The system can be configured through `config.yaml`. Note that I have created the system on a subset of data. You can specify the files you want the system to be based on in here under the `file_patterns` parameter. If you want to create the rag system on all datasets, you will need to do further fine tuning with a much more powerful machine, and remove or comment out the `file_patterns` parameter.
 
+Also due to the same machine constraint, I have reduced my search space to look at NSW Central Coast only. Uou can adjust this using the `state_filter` and 'srvc_dstrct_filter` under `config.yaml`.
+
 
 ```yaml
 ollama_path: "path/to/ollama"
@@ -148,9 +150,10 @@ file_path: "path/to/your/data"
 # (Optional) Patterns for files to include in processing.
 # If omitted or left empty, all files in the directory will be processed.
 file_patterns:
-   - "Participant_numbers_and_plan_budgets_data_"
-   - "Utilisation_of_plan_budget_data_"
-   - "web_page_content.txt"
+  - "Participant_numbers_and_plan_budgets_data_*"
+  - "Participant_numbers_and_plan_budgets_data_rules_DOCX*"
+state_filter: ["NSW"]
+srvc_dstrct_filter: ["Central Coast"]  
 ```
 
 ## 🎯 Usage
@@ -168,7 +171,6 @@ file_patterns:
 - For larger datasets, consider using the 70B parameter model:
   ```bash
   ollama pull llama3:70b
-  ```
   ```
 
 ## 🔍 Troubleshooting
@@ -222,6 +224,3 @@ For more information about the MIT License, visit [choosealicense.com/licenses/m
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
----
----
