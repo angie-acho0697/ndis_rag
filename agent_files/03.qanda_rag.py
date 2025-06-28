@@ -459,8 +459,6 @@ class Llama3QASystem:
 
             METRIC_KEYWORDS = [
                 "utilised",
-                "utilisation",
-                "utilisation rate",
                 "average annualised committed support",
                 "committed support",
                 "budget",
@@ -471,7 +469,6 @@ class Llama3QASystem:
                 "amount",
                 "avganldcmtdsuppbdgt",
                 "prtcpntcnt",
-                "Utlstn",
             ]
             question_lower = question.lower()
             for metric in METRIC_KEYWORDS:
@@ -486,7 +483,7 @@ class Llama3QASystem:
                 "region": ["SrvcDstrctNm", "Region"],
                 "disability": ["DsbltyGrpNm", "Disability"],
                 "age": ["AgeBnd", "Age"],
-                "support": ["AvgAnlsdCmtdSuppBdgt", "Support", "Utlstn", "Utilisation"],
+                "support": ["AvgAnlsdCmtdSuppBdgt", "Support"],
             }
             import re
             date_match = re.search(r"(\d{4}-\d{2}-\d{2}|\d{2}[A-Z]{3}\d{4})", question)
@@ -575,33 +572,58 @@ class Llama3QASystem:
             return True
         return False
 
-    def save_index(self, directory: str = "qa_index"):
-        # Absolute path to your desired directory
-        base_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "data", "processed")
-        )
-        save_path = os.path.join(base_dir, directory)
+    def save_index(self, directory: str = "faiss_index"):
+        """Save the FAISS index and documents to disk."""
         if not self.vectorstore:
             print("No index to save. Please build index first.")
             return False
-        os.makedirs(save_path, exist_ok=True)
-        self.vectorstore.save_local(save_path)
-        print(f"Index saved to {save_path}")
-        return True
-
-    def load_index(self, directory: str = "qa_index"):
-        # Absolute path to your desired directory
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        load_path = os.path.join(base_dir, directory)
-        if not os.path.exists(load_path):
-            print(f"Index directory {load_path} not found.")
-            return False
 
         try:
+            # Create the save directory
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "processed"))
+            save_path = os.path.join(base_dir, directory)
+            os.makedirs(save_path, exist_ok=True)
+
+            # Save the FAISS index
+            self.vectorstore.save_local(save_path)
+            
+            # Save the documents metadata
+            docs_path = os.path.join(save_path, "documents.pkl")
+            import pickle
+            with open(docs_path, "wb") as f:
+                pickle.dump(self.documents, f)
+            
+            print(f"Index and documents saved to {save_path}")
+            return True
+        except Exception as e:
+            print(f"Error saving index: {e}")
+            return False
+
+    def load_index(self, directory: str = "faiss_index"):
+        """Load the FAISS index and documents from disk."""
+        try:
+            # Get the load path
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "processed"))
+            load_path = os.path.join(base_dir, directory)
+            
+            if not os.path.exists(load_path):
+                print(f"Index directory {load_path} not found.")
+                return False
+
+            # Load the FAISS index
             self.vectorstore = FAISS.load_local(
-                load_path, self.embedding_model, allow_dangerous_deserialization=True
+                load_path,
+                self.embedding_model
             )
-            print(f"Index loaded from {load_path}")
+            
+            # Load the documents metadata
+            docs_path = os.path.join(load_path, "documents.pkl")
+            if os.path.exists(docs_path):
+                import pickle
+                with open(docs_path, "rb") as f:
+                    self.documents = pickle.load(f)
+            
+            print(f"Index and documents loaded from {load_path}")
             return True
         except Exception as e:
             print(f"Error loading index: {e}")

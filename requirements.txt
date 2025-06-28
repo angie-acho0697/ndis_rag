@@ -21,7 +21,12 @@ langchain_huggingface
 langchain-ollama
 faiss-cpu
 openpyxl
-pandas
-numpy
 spacy
-# python -m spacy download en_core_web_sm
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
+llama-index
+llama-index-retrievers-bm25
+ollama
+rank-bm25
+pyyaml
+tenacity
+httpx
