@@ -1,31 +1,27 @@
-import pandas as pd
+import json
+import os
+from pathlib import Path
+import time
+
+import faiss
+from httpx import ReadTimeout
 from llama_index.core import (
-    VectorStoreIndex,
-    Document,
+    PromptTemplate,
     Settings,
     StorageContext,
-    load_index_from_storage,
-    PromptTemplate,
+    VectorStoreIndex,
 )
+from llama_index.core.schema import Document as LIDocument
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
 from llama_index.vector_stores.faiss import FaissVectorStore
-from pathlib import Path
-import yaml
-import textwrap
-import os
-from tqdm import tqdm
-import time
-import faiss
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from httpx import ReadTimeout
-import requests.exceptions
-import shutil
-from rank_bm25 import BM25Okapi
-from llama_index.core.postprocessor import SimilarityPostprocessor
 import numpy as np
-import json
-from llama_index.core.schema import Document as LIDocument
+import pandas as pd
+from rank_bm25 import BM25Okapi
+import requests.exceptions
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tqdm import tqdm
+import yaml
 
 
 def get_config_value(config, key, default=None):
@@ -38,7 +34,7 @@ def chunk_text(text, chunk_size=3000, overlap=100):
     sections = []
     current_section = []
     lines = text.split("\n")
-    
+
     for line in lines:
         # Check if line is a table header or separator
         if "|" in line and ("---" in line or all(c in "|-" for c in line.strip())):
@@ -58,19 +54,19 @@ def chunk_text(text, chunk_size=3000, overlap=100):
                 sections.append("\n".join(current_section))
                 current_section = []
             current_section.append(line)
-    
+
     if current_section:
         sections.append("\n".join(current_section))
-    
+
     # Now chunk the sections while preserving table structure
     chunks = []
     current_chunk = []
     current_size = 0
-    
+
     for section in sections:
         section_words = section.split()
         section_size = len(section_words)
-        
+
         # If section is a table, try to keep it intact
         if "|" in section:
             if current_size + section_size > chunk_size and current_chunk:
@@ -88,13 +84,13 @@ def chunk_text(text, chunk_size=3000, overlap=100):
                 overlap_words = current_chunk[-1].split()[-overlap:] if current_chunk else []
                 current_chunk = [" ".join(overlap_words)]
                 current_size = len(overlap_words)
-            
+
             current_chunk.append(section)
             current_size += section_size
-    
+
     if current_chunk:
         chunks.append("\n".join(current_chunk))
-    
+
     return chunks
 
 
@@ -122,26 +118,25 @@ def build_index_with_progress(all_nodes, storage_context):
 def hybrid_search(index, query, k=10, alpha=0.5):
     """Perform hybrid search combining dense and sparse retrieval."""
     # Dense retrieval using FAISS
-    dense_results = index.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": k}
-    ).retrieve(query)
-    
+    dense_results = index.as_retriever(search_type="similarity", search_kwargs={"k": k}).retrieve(
+        query
+    )
+
     # Sparse retrieval using BM25
     texts = [node.node.text for node in dense_results]
     tokenized_texts = [text.split() for text in texts]
     bm25 = BM25Okapi(tokenized_texts)
     tokenized_query = query.split()
     sparse_scores = bm25.get_scores(tokenized_query)
-    
+
     # Combine scores
     combined_results = []
     for i, node in enumerate(dense_results):
-        dense_score = node.score if hasattr(node, 'score') else 0
+        dense_score = node.score if hasattr(node, "score") else 0
         sparse_score = sparse_scores[i]
         combined_score = alpha * dense_score + (1 - alpha) * sparse_score
         combined_results.append((node, combined_score))
-    
+
     # Sort by combined score
     combined_results.sort(key=lambda x: x[1], reverse=True)
     return [node for node, _ in combined_results[:k]]
@@ -297,7 +292,9 @@ Refined Answer:""")
         all_nodes = [LIDocument(**d) for d in docstore_data]
         print(f"Loaded {len(all_nodes)} nodes from docstore")
         print(f"FAISS index has {faiss_index.ntotal} vectors")
-        assert len(all_nodes) == faiss_index.ntotal, "Docstore and FAISS index are out of sync! Delete both and rebuild."
+        assert len(all_nodes) == faiss_index.ntotal, (
+            "Docstore and FAISS index are out of sync! Delete both and rebuild."
+        )
         faiss_store = FaissVectorStore(faiss_index=faiss_index)
         storage_context = StorageContext.from_defaults(vector_store=faiss_store)
         index = VectorStoreIndex.from_documents(all_nodes, storage_context=storage_context)
@@ -371,8 +368,12 @@ Refined Answer:""")
         dimension = len(embeddings[0])
         faiss_index = faiss.IndexFlatL2(dimension)
         faiss_index.add(np.array(embeddings).astype("float32"))
-        print(f"Saving {len(all_nodes)} nodes to docstore and {faiss_index.ntotal} vectors to FAISS index")
-        assert len(all_nodes) == faiss_index.ntotal, "Docstore and FAISS index are out of sync after build!"
+        print(
+            f"Saving {len(all_nodes)} nodes to docstore and {faiss_index.ntotal} vectors to FAISS index"
+        )
+        assert len(all_nodes) == faiss_index.ntotal, (
+            "Docstore and FAISS index are out of sync after build!"
+        )
         # Save the FAISS index
         os.makedirs(persist_dir, exist_ok=True)
         faiss.write_index(faiss_index, faiss_index_path)
@@ -395,7 +396,7 @@ Refined Answer:""")
             llm=llm,
             similarity_top_k=10,  # Increased to retrieve more relevant chunks for better context
             streaming=True,
-            verbose=True
+            verbose=True,
         )
 
     try:
@@ -422,21 +423,25 @@ if __name__ == "__main__":
         search_query = question
         # Use hybrid search for retrieval
         retrieved_nodes = hybrid_search(query_engine.index_struct, search_query, k=50, alpha=0.5)
+
         # Wrap nodes for compatibility with rest of code
         class DummyResponse:
             pass
+
         response = DummyResponse()
         response.source_nodes = retrieved_nodes
+
         # --- Remove all post-processing for static keywords such as utilisation ---
         # Only sort for perfect semantic match, not for static field-value pairs
         def is_perfect_semantic_match(node, question):
             # Optionally, you can keep a semantic match function, or just skip this
             return 0  # No special boosting
+
         if hasattr(response, "source_nodes"):
             response.source_nodes = sorted(
                 response.source_nodes,
                 key=lambda node: is_perfect_semantic_match(node, question),
-                reverse=True
+                reverse=True,
             )
         answer = ""
         # Robustly handle streaming response
