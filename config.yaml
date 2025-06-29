@@ -1,6 +1,28 @@
-ollama_path: "C:/Users/AngelicaChowdhury/AppData/Local/Programs/Ollama/ollama.exe"
-model_name: "llama3:8b"
-embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
-chunk_size: 1000
-chunk_overlap: 100
-file_path: "data/processed/combined_content.txt"
+# Model configuration
+model_name: "llama3:8b" # llama3:8b # qwen2.5:7b-instruct # mistral
+embedding_model: "BAAI/bge-large-en-v1.5" #"sentence-transformers/all-MiniLM-L6-v2" "BAAI/bge-large-en-v1.5"
+ollama_path: "%LOCALAPPDATA%/Programs/Ollama/ollama.exe"
+
+# Chunking configuration
+chunk_size: 3000
+chunk_overlap: 400
+max_nodes: ''  # Maximum number of nodes to process
+
+# File patterns for data processing
+file_patterns:
+  - "Participant_numbers_and_plan_budgets_data_*"
+  - "Participant_numbers_and_plan_budgets_data_rules_DOCX*"
+
+# Filter CSV rows. If not set or empty, index all rows.
+state_filter: ["NSW"]
+srvc_dstrct_filter: ["Central Coast"]
+
+definition_file:
+  path: "data/processed/definitions.txt"
+
+web_content_file:
+  path: "data/processed/webpage_content.txt"
+
+# Model settings
+llm_temperature: 0
+llm_top_p: 0.8

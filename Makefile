@@ -2,7 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_NAME = ndis_agent
+PROJECT_NAME = ndis_rag
 PYTHON_VERSION = 3.11
 PYTHON_INTERPRETER = python
 
