@@ -85,7 +85,7 @@ The following are the specifications of the system used for development and test
 ## 📁 Project Structure
 
 ```
-├── LICENSE            <- Open-source license
+├── LICENSE           <- Open-source license
 ├── Makefile          <- Makefile with convenience commands
 ├── README.md         <- Project documentation
 ├── config.yaml       <- Configuration settings
@@ -95,11 +95,11 @@ The following are the specifications of the system used for development and test
 │   ├── external/    <- Third-party data
 │   ├── interim/     <- Intermediate data
 │   ├── processed/   <- Final datasets
-│   └── raw/        <- Original data
+│   └── raw/         <- Original data
 └── agent_files/     <- Core application files
     ├── 01.import_data.py    <- Data collection script
     ├── 02.parse_files.py    <- Data processing script
-    ├── 03.llamaindex_rag.py      <- RAG system implementation
+    ├── 03.llamaindex_rag.py <- RAG system implementation
     └── 04.rag_app.py        <- Streamlit application
 ```
 
