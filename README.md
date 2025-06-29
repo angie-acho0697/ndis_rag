@@ -56,7 +56,7 @@ Download and install Ollama from [Ollama Windows](https://ollama.com/download/wi
 ollama pull llama3
 ```
 
-7. **Run the data prep**
+6. **Run the data prep**
 
 ```bash
 python agent_files/01.import_data.py
@@ -64,14 +64,7 @@ python agent_files/02.parse_file.py
 
 ```
 
-6. **Run the data prep**
-
-```bash
-python agent_files/01.import_data.py
-python agent_files/02.parse_files.py
-```
-
-7. **Run the application**
+7. **Run the application, which also runs the embedding and indexing step**
 
 ```bash
 streamlit run agent_files/04.rag_app.py
@@ -106,27 +99,23 @@ The following are the specifications of the system used for development and test
 └── agent_files/     <- Core application files
     ├── 01.import_data.py    <- Data collection script
     ├── 02.parse_files.py    <- Data processing script
-    ├── 03.qanda_rag.py      <- RAG system implementation
+    ├── 03.llamaindex_rag.py      <- RAG system implementation
     └── 04.rag_app.py        <- Streamlit application
 ```
 
 ## 🔧 How It Works
 
 1. **Data Collection** (`agent_files/01.import_data.py`)
-
-
    - Scrapes NDIS participant data from the official website
    - Downloads relevant CSV and DOCX files defined under config file
    - Extracts and saves web page content
 
 2. **Data Processing** (`agent_files/02.parse_files.py`)
-
-
    - Combines content from multiple sources
    - Processes different file formats
    - Creates a unified knowledge base
 
-3. **Q&A System** (`agent_files/03.qanda_rag.py`, `agent_files/04.rag_app.py`)
+3. **Q&A System** (`agent_files/03.llamaindex_rag.py`, `agent_files/04.rag_app.py`)
    - Splits documents into manageable chunks
    - Creates vector embeddings using sentence transformers
    - Builds a FAISS index for efficient similarity search

@@ -4,21 +4,21 @@ from pathlib import Path
 import platform
 import subprocess
 import sys
-import threading
 
 import streamlit as st
 import yaml
 
 # Dynamically import get_query_engine from 05.llamaindex_rag.py
-rag_module_path = str(Path(__file__).parent / '05.llamaindex_rag.py')
-spec = importlib.util.spec_from_file_location('llamaindex_rag', rag_module_path)
+rag_module_path = str(Path(__file__).parent / "05.llamaindex_rag.py")
+spec = importlib.util.spec_from_file_location("llamaindex_rag", rag_module_path)
 llamaindex_rag = importlib.util.module_from_spec(spec)
-sys.modules['llamaindex_rag'] = llamaindex_rag
+sys.modules["llamaindex_rag"] = llamaindex_rag
 spec.loader.exec_module(llamaindex_rag)
 get_query_engine = llamaindex_rag.get_query_engine
 
 # Suppress Streamlit watcher warning
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
+
 
 # Load config
 def load_config():
@@ -30,6 +30,7 @@ def load_config():
         if "ollama_path" in config:
             config["ollama_path"] = os.path.expandvars(config["ollama_path"])
         return config
+
 
 config = load_config()
 
@@ -50,6 +51,7 @@ EMBEDDING_MODEL = config.get("embedding_model", "sentence-transformers/all-MiniL
 CHUNK_SIZE = config.get("chunk_size", 3000)
 CHUNK_OVERLAP = config.get("chunk_overlap", 100)
 
+
 def is_ollama_installed() -> bool:
     try:
         result = subprocess.run(
@@ -62,6 +64,7 @@ def is_ollama_installed() -> bool:
     except Exception as e:
         print("Ollama check error:", e)
         return False
+
 
 def get_ollama_install_instructions() -> str:
     system = platform.system()
@@ -78,10 +81,12 @@ def get_ollama_install_instructions() -> str:
     else:
         return "Visit https://ollama.com for installation instructions."
 
+
 # --- Use the RAG pipeline from 05.llamaindex_rag.py ---
 @st.cache_resource(show_spinner=True)
 def get_cached_query_engine():
     return get_query_engine()
+
 
 # --- Streamlit UI ---
 def main():
@@ -90,7 +95,7 @@ def main():
 
     st.image(str(logo_path), width=150)
     st.title("NDIS Q&A System")
-    
+
     # Get the actual model name from config
     model_name = config.get("model_name")
     st.markdown(f"""
@@ -113,9 +118,10 @@ def main():
         # Model status (from config)
         st.subheader("LLM Model")
         st.success(f"✅ Using {model_name}")
-        
+
         # Use custom styling for consistent colors
-        st.markdown("""
+        st.markdown(
+            """
         <style>
         /* Blue styling for LLM Model section */
         .llm-info .stInfo {
@@ -136,27 +142,29 @@ def main():
             color: #1F1F1F;
         }
         </style>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         # LLM Model section with blue styling
         with st.container():
             st.markdown('<div class="llm-info">', unsafe_allow_html=True)
             st.info(f"Temperature: {config.get('llm_temperature', 0)}")
             st.info(f"Top-p: {config.get('llm_top_p', 0.8)}")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("Embedding Model")
         with st.container():
             st.markdown('<div class="grey-info">', unsafe_allow_html=True)
             st.info(config.get("embedding_model", "Not set"))
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("Document Processing")
         with st.container():
             st.markdown('<div class="grey-info">', unsafe_allow_html=True)
             st.info(f"Chunk Size: {config.get('chunk_size', 'Not set')}")
             st.info(f"Chunk Overlap: {config.get('chunk_overlap', 'Not set')}")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("Search Configuration")
         with st.container():
@@ -164,7 +172,7 @@ def main():
             st.info("Using hybrid search (FAISS + BM25)")
             st.info("Top-k retrieval: 10 documents")
             st.info("Alpha (dense/sparse balance): 0.5")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         st.subheader("Index Management")
         st.markdown(
@@ -175,7 +183,9 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        st.caption("The index will be loaded from data/processed/faiss_index if it exists, or created and saved automatically.")
+        st.caption(
+            "The index will be loaded from data/processed/faiss_index if it exists, or created and saved automatically."
+        )
 
     st.header("Ask a Question")
     query_engine = get_cached_query_engine()
@@ -204,18 +214,21 @@ def main():
                         for i, node in enumerate(response.source_nodes, 1):
                             st.markdown(f"**Source {i}:**")
                             try:
-                                st.markdown(f"**Source file:** {node.node.metadata.get('source', 'N/A')}")
+                                st.markdown(
+                                    f"**Source file:** {node.node.metadata.get('source', 'N/A')}"
+                                )
                             except Exception as e:
                                 st.markdown(f"Error accessing source file: {e}")
                                 st.markdown(f"Metadata keys: {list(node.node.metadata.keys())}")
                             st.markdown(node.node.text)
                             st.markdown("---")
-                            
+
             except Exception as e:
                 st.error(f"Error processing question: {str(e)}")
                 st.markdown("**Debug Error Info:**")
                 st.markdown(f"- Error type: {type(e)}")
                 st.markdown(f"- Error message: {str(e)}")
+
 
 if __name__ == "__main__":
     main()
