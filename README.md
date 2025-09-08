@@ -27,7 +27,6 @@ A Q&A system built to answer questions about NDIS (National Disability Insurance
 ```bash
 git clone [repository-url]
 cd ndis_rag
-cd ndis_rag
 ```
 
 2. **Create and activate virtual environment**
